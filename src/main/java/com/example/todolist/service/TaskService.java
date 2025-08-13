@@ -1,16 +1,15 @@
 package com.example.todolist.service;
 
-import com.example.todolist.DTO.DeleteTaskRequest;
-import com.example.todolist.DTO.DeleteTaskResponse;
-import com.example.todolist.DTO.TaskRequest;
-import com.example.todolist.DTO.TaskResponse;
+import com.example.todolist.DTO.*;
 
 import java.util.List;
 
 public interface TaskService {
-    TaskResponse save(TaskRequest taskRequest);
+    CreateTaskResponse save(CreateTaskRequest createTaskRequest);
 
-    List<TaskResponse> findAll(Integer userId);
+    List<CreateTaskResponse> findAll(Integer userId);
 
-    DeleteTaskResponse deleteTask(DeleteTaskRequest deleteTaskRequest);
+    TaskResponse deleteTask(DeleteTaskRequest deleteTaskRequest);
+
+    TaskResponse updateTask(PatchTaskRequest patchTaskRequest);
 }

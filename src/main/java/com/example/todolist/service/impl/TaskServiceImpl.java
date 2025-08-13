@@ -1,9 +1,6 @@
 package com.example.todolist.service.impl;
 
-import com.example.todolist.DTO.DeleteTaskRequest;
-import com.example.todolist.DTO.DeleteTaskResponse;
-import com.example.todolist.DTO.TaskRequest;
-import com.example.todolist.DTO.TaskResponse;
+import com.example.todolist.DTO.*;
 import com.example.todolist.Repository.TaskRepo;
 import com.example.todolist.Repository.UserRepo;
 import com.example.todolist.entity.Task;
@@ -30,41 +27,66 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public TaskResponse save(TaskRequest taskRequest) {
-        User user = userRepo.findById(taskRequest.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
+    public CreateTaskResponse save(CreateTaskRequest createTaskRequest) {
+        User user = userRepo.findById(createTaskRequest.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
         Task savedTask = taskRepo
-                .save(new Task(taskRequest.getTitle(), taskRequest.getDescription(), taskRequest.getLabel(), user));
+                .save(new Task(createTaskRequest.getTitle(), createTaskRequest.getDescription(), createTaskRequest.getLabel(), user));
         return convertToResponse(savedTask);
     }
 
     @Override
     @Transactional
-    public List<TaskResponse> findAll(Integer userId) {
+    public List<CreateTaskResponse> findAll(Integer userId) {
         User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User is not found"));
         List<Task> tasks = taskRepo.findByUserId(userId);
         return tasks.stream().map(this::convertToResponse).collect(Collectors.toList());
     }
 
     @Override
-    public DeleteTaskResponse deleteTask(DeleteTaskRequest deleteTaskRequest) {
+    public TaskResponse deleteTask(DeleteTaskRequest deleteTaskRequest) {
         try {
 
             Optional<User> user = userRepo.findById(deleteTaskRequest.getUserId());
             if (user.isEmpty())
-                return new DeleteTaskResponse("User does not exist", false);
+                return new TaskResponse("User does not exist", false);
             Optional<Task> optionalTask = taskRepo.findById(deleteTaskRequest.getTaskId());
             if (optionalTask.isEmpty())
-                return new DeleteTaskResponse("Task does not exist", false);
+                return new TaskResponse("Task does not exist", false);
             taskRepo.delete(optionalTask.get());
-            return new DeleteTaskResponse("Deleted Task successfully", true);
+            return new TaskResponse("Deleted Task successfully", true);
 
         } catch (Exception e) {
-            return new DeleteTaskResponse("Some Error occured while deleting task", false);
+            return new TaskResponse("Some Error occurred while deleting task", false);
         }
     }
 
-    private TaskResponse convertToResponse(Task task) {
-        return new TaskResponse(
+    @Override
+    public TaskResponse updateTask(PatchTaskRequest patchTaskRequest) {
+        try {
+            Optional<User> optionalUser = userRepo.findById(patchTaskRequest.getUserId());
+            if (optionalUser.isEmpty())
+                return new TaskResponse("User does not exist", false);
+            Optional<Task> optionalTask = taskRepo.findById(patchTaskRequest.getTaskId());
+            if (optionalTask.isEmpty())
+                return new TaskResponse("Task does not exist", false);
+
+            Task task = optionalTask.get();
+
+            patchTaskRequest.getTitle().ifPresent(task::setTitle);
+            patchTaskRequest.getDescription().ifPresent(task::setDescription);
+            patchTaskRequest.getLabel().ifPresent(task::setLabel);
+
+            taskRepo.save(task);
+
+            return new TaskResponse("Updated Task successfully", true);
+
+        } catch (Exception e) {
+            return new TaskResponse("Some Error occurred while deleting task", false);
+        }
+    }
+
+    private CreateTaskResponse convertToResponse(Task task) {
+        return new CreateTaskResponse(
                 task.getId(),
                 task.getTitle(),
                 task.getDescription(),

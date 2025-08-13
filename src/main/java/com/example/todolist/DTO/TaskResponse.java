@@ -5,16 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class TaskResponse {
-    private int id;
 
-    private String title;
+    private String message;
 
-    private String description;
+    private boolean success;
 
-    private String label;
 
-    private int userId;
 }

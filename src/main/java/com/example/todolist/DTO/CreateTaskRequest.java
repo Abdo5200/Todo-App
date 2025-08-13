@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskRequest {
+public class CreateTaskRequest {
 
     @NotNull(message = "title is required")
     private String title;
