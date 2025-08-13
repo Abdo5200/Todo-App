@@ -1,9 +1,11 @@
 package com.example.todolist.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
     @Value("${FRONTEND-URL}")
     private String frontendUrl;
@@ -33,12 +36,25 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers("/**")
+                                .requestMatchers("/auth/**")
                                 .permitAll()
+                                .anyRequest()
+                                .authenticated()
                 )
                 .sessionManagement(session ->
                         session
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessHandler(((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.getWriter().write("{\"message\":\"Logout successful\"}");
+                            response.setContentType("application/json");
+                        }))
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                 );
         return httpSecurity.build();
     }
