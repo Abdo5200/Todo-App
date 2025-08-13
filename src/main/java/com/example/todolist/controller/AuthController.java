@@ -1,10 +1,8 @@
 package com.example.todolist.controller;
 
-import com.example.todolist.DTO.LoginRequest;
-import com.example.todolist.DTO.LoginResponse;
-import com.example.todolist.DTO.SignupRequest;
-import com.example.todolist.DTO.SignupResponse;
+import com.example.todolist.DTO.*;
 import com.example.todolist.service.UserService;
+import com.example.todolist.service.impl.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @Autowired
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, PasswordResetService passwordResetService) {
         this.userService = userService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/signup")
@@ -42,5 +42,20 @@ public class AuthController {
             return ResponseEntity.badRequest().body(loginResponse);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ForgotPasswordResponse> postForgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        ForgotPasswordResponse forgotPasswordResponse = passwordResetService.forgotPassword(forgotPasswordRequest);
+        if (!forgotPasswordResponse.isSuccess())
+            return ResponseEntity.badRequest().body(forgotPasswordResponse);
+        return ResponseEntity.ok(forgotPasswordResponse);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ResetPasswordResponse> postResetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        ResetPasswordResponse resetPasswordResponse = passwordResetService.resetPassword(resetPasswordRequest);
+        if (!resetPasswordResponse.isSuccess())
+            return ResponseEntity.badRequest().body(resetPasswordResponse);
+        return ResponseEntity.ok(resetPasswordResponse);
+    }
 
 }

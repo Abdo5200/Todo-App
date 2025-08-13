@@ -11,13 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
-
-//    @Bean
-//    public UserDetailsManager userDetailsManager(DataSource dataSource) {
-//        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
-//        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select email,password from user where email=?");
-//    }
-
+    
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
