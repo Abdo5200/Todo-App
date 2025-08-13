@@ -7,6 +7,7 @@ import com.example.todolist.Repository.UserRepo;
 import com.example.todolist.entity.Task;
 import com.example.todolist.entity.User;
 import com.example.todolist.service.TaskService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public TaskResponse save(TaskRequest taskRequest) {
         User user = userRepo.findById(taskRequest.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
         Task savedTask = taskRepo
@@ -33,6 +35,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public List<TaskResponse> findAll(Integer userId) {
         User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User is not found"));
         List<Task> tasks = taskRepo.findByUserId(userId);

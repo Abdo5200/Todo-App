@@ -7,6 +7,7 @@ import com.example.todolist.DTO.SignupResponse;
 import com.example.todolist.Repository.UserRepo;
 import com.example.todolist.entity.User;
 import com.example.todolist.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User findById(Integer id) {
         Optional<User> user = userRepo.findById(id);
         if (user.isEmpty())
@@ -33,6 +35,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public SignupResponse registerUser(SignupRequest signupRequest) {
         try {
 
@@ -54,6 +57,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public LoginResponse authenticateUser(LoginRequest loginRequest) {
         try {
 

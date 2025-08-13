@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user")
@@ -33,6 +36,15 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private LocalDateTime resetTokenExpiry;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
     @Override
     public String toString() {
         return "User{" +
@@ -41,6 +53,9 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
+                ", resetToken='" + resetToken + '\'' +
+                ", resetTokenExpiry=" + resetTokenExpiry +
+                ", createdAt=" + createdAt +
                 '}';
     }
 }
