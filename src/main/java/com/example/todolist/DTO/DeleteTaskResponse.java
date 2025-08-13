@@ -1,0 +1,17 @@
+package com.example.todolist.DTO;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class DeleteTaskResponse {
+
+    private String message;
+
+    private boolean success;
+
+
+}

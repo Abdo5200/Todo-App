@@ -1,8 +1,11 @@
 package com.example.todolist.controller;
 
+import com.example.todolist.DTO.DeleteTaskRequest;
+import com.example.todolist.DTO.DeleteTaskResponse;
 import com.example.todolist.DTO.TaskRequest;
 import com.example.todolist.DTO.TaskResponse;
 import com.example.todolist.service.TaskService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,5 +32,13 @@ public class TodoController {
     public ResponseEntity<List<TaskResponse>> getTasks(@PathVariable Integer userId) {
         List<TaskResponse> tasks = taskService.findAll(userId);
         return ResponseEntity.ok(tasks);
+    }
+
+    @DeleteMapping("/tasks")
+    public ResponseEntity<DeleteTaskResponse> postDeleteTask(@Valid @RequestBody DeleteTaskRequest deleteTaskRequest) {
+        DeleteTaskResponse response = taskService.deleteTask(deleteTaskRequest);
+        if (!response.isSuccess())
+            return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.ok(response);
     }
 }

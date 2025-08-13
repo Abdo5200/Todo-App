@@ -1,5 +1,7 @@
 package com.example.todolist.service.impl;
 
+import com.example.todolist.DTO.DeleteTaskRequest;
+import com.example.todolist.DTO.DeleteTaskResponse;
 import com.example.todolist.DTO.TaskRequest;
 import com.example.todolist.DTO.TaskResponse;
 import com.example.todolist.Repository.TaskRepo;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +43,24 @@ public class TaskServiceImpl implements TaskService {
         User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User is not found"));
         List<Task> tasks = taskRepo.findByUserId(userId);
         return tasks.stream().map(this::convertToResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public DeleteTaskResponse deleteTask(DeleteTaskRequest deleteTaskRequest) {
+        try {
+
+            Optional<User> user = userRepo.findById(deleteTaskRequest.getUserId());
+            if (user.isEmpty())
+                return new DeleteTaskResponse("User does not exist", false);
+            Optional<Task> optionalTask = taskRepo.findById(deleteTaskRequest.getTaskId());
+            if (optionalTask.isEmpty())
+                return new DeleteTaskResponse("Task does not exist", false);
+            taskRepo.delete(optionalTask.get());
+            return new DeleteTaskResponse("Deleted Task successfully", true);
+
+        } catch (Exception e) {
+            return new DeleteTaskResponse("Some Error occured while deleting task", false);
+        }
     }
 
     private TaskResponse convertToResponse(Task task) {
