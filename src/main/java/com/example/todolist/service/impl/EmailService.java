@@ -1,16 +1,23 @@
 package com.example.todolist.service.impl;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import com.example.todolist.exception.EmailServiceException;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
 @Service
 public class EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender javaMailSender;
 
@@ -31,28 +38,23 @@ public class EmailService {
         this.javaMailSender = javaMailSender;
     }
 
-
     @PostConstruct
-    public void debugConfig() {
-        System.out.println("=== EMAIL SERVICE CONFIG DEBUG ===");
-        System.out.println("Gmail Username: " + (gmailUsername != null && !gmailUsername.isEmpty() ?
-                "SET (" + gmailUsername.substring(0, Math.min(5, gmailUsername.length())) + "...)" : "NOT SET"));
-        System.out.println("Frontend URL: " + frontendUrl);
-        System.out.println("From Email: " + fromEmail);
-        System.out.println("From Name: " + fromName);
-        System.out.println("================================");
+    public void logConfig() {
+        logger.info("Email Service Configuration:");
+        logger.info("Gmail Username: {}",
+                gmailUsername != null && !gmailUsername.isEmpty()
+                        ? "SET (" + gmailUsername.substring(0, Math.min(5, gmailUsername.length())) + "...)"
+                        : "NOT SET");
+        logger.info("Frontend URL: {}", frontendUrl);
+        logger.info("From Email: {}", fromEmail);
+        logger.info("From Name: {}", fromName);
     }
 
     public void sendPasswordResetEmail(String toEmail, String firstName, String resetToken) {
         try {
-            System.out.println("=== SENDING EMAIL DEBUG ===");
-            System.out.println("To: " + toEmail);
-            System.out.println("From: " + fromEmail);
-            System.out.println("Token: " + resetToken);
+            logger.debug("Sending password reset email to: {}", toEmail);
 
             String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
-            System.out.println("Reset Link: " + resetLink);
-
             String htmlContent = createPasswordResetEmailTemplate(firstName, resetLink);
 
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -63,18 +65,15 @@ public class EmailService {
             helper.setSubject("Reset Your Password - Todo App");
             helper.setText(htmlContent, true); // true indicates HTML content
 
-            System.out.println("Sending email via Gmail SMTP...");
             javaMailSender.send(message);
-            System.out.println("Email sent successfully!");
+            logger.info("Password reset email sent successfully to: {}", toEmail);
 
         } catch (MessagingException e) {
-            System.err.println("MessagingException in sendPasswordResetEmail: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Error sending password reset email: " + e.getMessage());
+            logger.error("Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            throw new EmailServiceException("Error sending password reset email: " + e.getMessage(), e);
         } catch (Exception e) {
-            System.err.println("Error in sendPasswordResetEmail: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Error sending password reset email: " + e.getMessage());
+            logger.error("Unexpected error sending password reset email to {}: {}", toEmail, e.getMessage());
+            throw new EmailServiceException("Error sending password reset email: " + e.getMessage(), e);
         }
     }
 

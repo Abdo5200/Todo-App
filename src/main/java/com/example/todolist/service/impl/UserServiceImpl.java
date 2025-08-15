@@ -1,28 +1,41 @@
 package com.example.todolist.service.impl;
 
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.example.todolist.DTO.LoginRequest;
 import com.example.todolist.DTO.LoginResponse;
 import com.example.todolist.DTO.SignupRequest;
 import com.example.todolist.DTO.SignupResponse;
 import com.example.todolist.Repository.UserRepo;
+import com.example.todolist.config.JwtUtil;
 import com.example.todolist.entity.User;
+import com.example.todolist.exception.UserNotFoundException;
 import com.example.todolist.service.UserService;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public UserServiceImpl(UserRepo userRepo, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepo userRepo, PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -30,7 +43,7 @@ public class UserServiceImpl implements UserService {
     public User findById(Integer id) {
         Optional<User> user = userRepo.findById(id);
         if (user.isEmpty())
-            throw new RuntimeException("User with id " + id + " does not exist");
+            throw new UserNotFoundException("User with id " + id + " does not exist");
         return user.get();
     }
 
@@ -60,25 +73,32 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public LoginResponse authenticateUser(LoginRequest loginRequest) {
         try {
+            // Authenticate using Spring Security
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+            // Generate JWT token
+            String token = jwtUtil.generateToken(userDetails);
+
+            // Get user details
             Optional<User> optionalUser = userRepo.findByEmail(loginRequest.getEmail());
             if (optionalUser.isEmpty()) {
-                return new LoginResponse("User not found", false, null);
+                return new LoginResponse("User not found", false, null, null);
             }
+
             User user = optionalUser.get();
-            if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-                return new LoginResponse("Invalid email or password", false, null);
-            }
             LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
                     user.getId(),
                     user.getFirstName(),
                     user.getLastName(),
-                    user.getEmail()
-            );
-            return new LoginResponse("Login successful", true, userInfo);
+                    user.getEmail());
+
+            return new LoginResponse("Login successful", true, token, userInfo);
 
         } catch (Exception e) {
-            return new LoginResponse("Login failed", false, null);
+            return new LoginResponse("Invalid email or password", false, null, null);
         }
     }
 }

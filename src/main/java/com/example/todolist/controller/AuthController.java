@@ -1,15 +1,18 @@
 package com.example.todolist.controller;
 
 import com.example.todolist.DTO.*;
+import com.example.todolist.config.JwtUtil;
 import com.example.todolist.service.UserService;
 import com.example.todolist.service.impl.PasswordResetService;
+import com.example.todolist.service.impl.TokenBlacklistService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController()
 @RequestMapping("/auth")
@@ -17,11 +20,16 @@ public class AuthController {
 
     private final UserService userService;
     private final PasswordResetService passwordResetService;
+    private final TokenBlacklistService tokenBlacklistService;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthController(UserService userService, PasswordResetService passwordResetService) {
+    public AuthController(UserService userService, PasswordResetService passwordResetService,
+                          TokenBlacklistService tokenBlacklistService, JwtUtil jwtUtil) {
         this.userService = userService;
         this.passwordResetService = passwordResetService;
+        this.tokenBlacklistService = tokenBlacklistService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/signup")
@@ -42,16 +50,33 @@ public class AuthController {
             return ResponseEntity.badRequest().body(loginResponse);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            // Blacklist the token
+            long expirationTime = jwtUtil.extractExpiration(token).getTime();
+            tokenBlacklistService.blacklistToken(token, expirationTime);
+        }
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Logout successful");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/forgot-password")
-    public ResponseEntity<ForgotPasswordResponse> postForgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+    public ResponseEntity<ForgotPasswordResponse> postForgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         ForgotPasswordResponse forgotPasswordResponse = passwordResetService.forgotPassword(forgotPasswordRequest);
         if (!forgotPasswordResponse.isSuccess())
             return ResponseEntity.badRequest().body(forgotPasswordResponse);
         return ResponseEntity.ok(forgotPasswordResponse);
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<ResetPasswordResponse> postResetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+    @PatchMapping("/reset-password")
+    public ResponseEntity<ResetPasswordResponse> postResetPassword(
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         ResetPasswordResponse resetPasswordResponse = passwordResetService.resetPassword(resetPasswordRequest);
         if (!resetPasswordResponse.isSuccess())
             return ResponseEntity.badRequest().body(resetPasswordResponse);
