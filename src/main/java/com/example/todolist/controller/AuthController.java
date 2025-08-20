@@ -1,18 +1,31 @@
 package com.example.todolist.controller;
 
-import com.example.todolist.DTO.*;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.todolist.DTO.ForgotPasswordRequest;
+import com.example.todolist.DTO.ForgotPasswordResponse;
+import com.example.todolist.DTO.LoginRequest;
+import com.example.todolist.DTO.LoginResponse;
+import com.example.todolist.DTO.ResetPasswordRequest;
+import com.example.todolist.DTO.ResetPasswordResponse;
+import com.example.todolist.DTO.SignupRequest;
+import com.example.todolist.DTO.SignupResponse;
 import com.example.todolist.config.JwtUtil;
 import com.example.todolist.service.UserService;
 import com.example.todolist.service.impl.PasswordResetService;
 import com.example.todolist.service.impl.TokenBlacklistService;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController()
 @RequestMapping("/auth")
@@ -25,7 +38,7 @@ public class AuthController {
 
     @Autowired
     public AuthController(UserService userService, PasswordResetService passwordResetService,
-                          TokenBlacklistService tokenBlacklistService, JwtUtil jwtUtil) {
+            TokenBlacklistService tokenBlacklistService, JwtUtil jwtUtil) {
         this.userService = userService;
         this.passwordResetService = passwordResetService;
         this.tokenBlacklistService = tokenBlacklistService;
